@@ -8,7 +8,7 @@ For a more in-depth description of the work, see the [notes on arxiv](https://ar
 
 ### Example usage:
 
-```python 
+```python
 from main import demo_generator
 demo_generator('00d62c1b')
 ```
