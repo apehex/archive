@@ -1,0 +1,10 @@
+# python env
+.python-version
+poetry.lock
+
+# cache
+__pycache__
+.pytest_cache
+
+# build
+dist

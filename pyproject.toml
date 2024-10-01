@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "archive"
+version = "0.0.1"
+description = "Extend the ARC"
+authors = ["apehex <apehex@protonmail.com>"]
+readme = ".github/README.md"
+packages = [{include = "archive"}]
+
+[tool.poetry.dependencies]
+matplotlib = ">=3.5"
+python = ">=3.10, <3.13"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
