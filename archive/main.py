@@ -1,16 +1,17 @@
 import json
 import os
 import random
-import time
+import sys
 
 import tqdm
 
 import dsl
 import generators
 import utils
-from utils import *
-from dsl import *
 import verifiers
+
+from dsl import *
+from utils import *
 
 # CONSTANTS ####################################################################
 
@@ -73,76 +74,71 @@ def demo_generator(key, n=6):
     generated_examples = [generator(0, 1) for k in range(n)]
     plot_task(original_task)
     plot_task(generated_examples)
-    
+
+# INSPECT ######################################################################
+
+def check_sample(sample: dict, verifier_fn: callable) -> bool:
+    return (
+        utils.is_sample(sample)
+        and sample['input'] != sample['output']
+        and verifier_fn(sample['input']) == sample['output'])
+
+# GENERATE #####################################################################
+
+def generate_task(generator_fn: callable, verifier_fn: callable, n_samples: int=5, diff_lb: float=0.0, diff_ub: float=1.0) -> tuple:
+    __valid = {}
+    __broken = {}
+    __count = round(random.uniform(2, max(2, n_samples)))
+    while len(__valid) < __count:
+        try:
+            __s = generator_fn(diff_lb, diff_ub)
+            __k = hash(__s['input'])
+            if check_sample(sample=__s, verifier_fn=verifier_fn):
+                __valid[__k] = __s
+            else:
+                __broken[__k] = __s
+        except:
+            pass
+    return __valid, __broken
 
 def generate_dataset(
-    path: str='re_arc',
-    n_examples: int=32,
+    path: str=PATH,
     n_tasks: int=32,
-    diff_lb: float = 0,
-    diff_ub: float = 1
+    n_samples: int=5,
+    diff_lb: float = 0.0,
+    diff_ub: float = 1.0
 ) -> None:
     """
     generates dataset
 
     path: which folder to save data to
-    seed: for deterministic generation / reproducibility
-    n_examples: number of examples per task
+    n_tasks: number of distinct task per challenge
+    n_samples: number of examples per task
     diff_lb: lower bound for difficulty
     diff_ub: upper bound for difficulty
     """
-    generators_mapper = get_generators()
-    verifiers_mapper = get_verifiers()
-    keys = sorted(generators_mapper.keys())
-    k = len(keys)
-    desc = f'task 0/{k}, example 0/{n_examples}'
-    pbar = tqdm.tqdm(enumerate(keys), desc=desc, position=0, leave=True, total=k)
-    metadata = dict()
-    for i, key in pbar:
-        generator = generators_mapper[key]
-        verifier = verifiers_mapper[key]
-        seen = set()
-        examples = []
-        stats = {
-            'n_generations': 0, 'n_verified': 0, 'n_nondegenerate': 0,
-            'rng_difficulties': [], 'pso_difficulties': []
-        }
-        start = time.time()
-        while len(examples) < n_examples:
-            example, identifier, success = None, None, True
-            try:
-                example = generator(diff_lb, diff_ub)
-                assert is_grid(example['input'])
-                assert is_grid(example['output'])
-                identifier = hash(example['input'])
-                stats['n_generations'] += 1
-            except:
-                success = False
-            try:
-                assert success and verifier(example['input']) == example['output']
-                stats['n_verified'] += 1
-            except:
-                success = False
-            try:
-                assert success and example['input'] != example['output']
-                stats['n_nondegenerate'] += 1
-            except:
-                success = False
-            if success and identifier not in seen:
-                examples.append(example)
-                seen.add(identifier)
-                stats['rng_difficulties'].append(get_rng_difficulty(example))
-                stats['pso_difficulties'].append(get_pso_difficulty(example))
-                desc = f'task {i+1}/{k}, example {len(examples)}/{n_examples}'
-                pbar.set_description(desc)
-        end = time.time()
-        stats['runtime'] = end - start
-        with open(os.path.join(tasks_path, f'{key}.json'), 'w') as fp:
-            json.dump(examples, fp)
-        metadata[key] = stats
-    with open(os.path.join(path, 'metadata.json'), 'w') as fp:
-        json.dump(metadata, fp)
+    __generators = get_generators()
+    __verifiers = get_verifiers()
+    # iterate over
+    __keys = sorted(__generators.keys())
+    __status = 'challenge {{c}}/{n_challenges}, task {{t}}/{n_tasks}'.format(n_challenges=len(__keys), n_tasks=n_tasks)
+    __pbar = tqdm.tqdm(enumerate(__keys), desc=__status.format(c=0, t=0), position=0, leave=True, total=len(__keys))
+    # iterate over challenges
+    for __i, __k in __pbar:
+        __gen = __generators[__k]
+        __che = __verifiers[__k]
+        for __j in range(n_tasks):
+            # generate an independent task
+            __v, __b = generate_task(generator_fn=__gen, verifier_fn=__che, n_samples=n_samples, diff_lb=diff_lb, diff_ub=diff_ub)
+            # display progress
+            __pbar.set_description(__status.format(c=__i, t=__j))
+            # export the results
+            with open(os.path.join(path, f'{__k}.{__j}.json'), 'w') as __f:
+                json.dump(list(__v.values()), __f)
+            with open(os.path.join(path, 'broken', f'{__k}.{__j}.json'), 'w') as __f:
+                json.dump(list(__b.values()), __f)
 
+# DISPLAY ######################################################################
 
 def demo_dataset(
     folder: str = 're_arc',
@@ -176,6 +172,7 @@ def demo_dataset(
             print('generated (hard):')
             plot_task(hard)
 
+# ORIGINAL DATA ################################################################
 
 def evaluate_verifiers_on_original_tasks() -> None:
     """
@@ -203,11 +200,10 @@ def evaluate_verifiers_on_original_tasks() -> None:
 
 # MAIN #########################################################################
 
-if __name__ == '__main__':
-    # create the dirs
-    os.makedirs(PATH, exist_ok=True)
-    os.makedirs(os.path.join(PATH, 'tasks'), exist_ok=True)
-    # setup the env
-    random.seed(SEED)
-    #
-    generate_dataset()
+# if __name__ == '__main__':
+#     # create the dirs
+#     os.makedirs(PATH, exist_ok=True)
+#     # setup the env
+#     random.seed(SEED)
+#     # default
+#     generate_dataset()

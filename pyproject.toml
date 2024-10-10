@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "archive"
-version = "0.0.1"
+version = "0.0.2"
 description = "Extend the ARC"
 authors = ["apehex <apehex@protonmail.com>"]
 readme = ".github/README.md"
@@ -9,6 +9,7 @@ packages = [{include = "archive"}]
 [tool.poetry.dependencies]
 matplotlib = ">=3.5"
 python = ">=3.10, <3.13"
+tqdm = ">=4.32"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

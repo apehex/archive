@@ -49,6 +49,19 @@ def is_grid(
         return False
     return True
 
+def is_sample(
+    sample: dict
+) -> bool:
+    """
+    returns True iff the input is a valid sample
+    """
+    return (
+        isinstance(sample, dict)
+        and 'input' in sample.keys()
+        and 'output' in sample.keys()
+        and is_grid(sample['input'])
+        and is_grid(sample['output']))
+
 
 def strip_prefix(
     string: str,
