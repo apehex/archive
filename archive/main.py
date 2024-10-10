@@ -1,20 +1,23 @@
-import time
-import tqdm
-import os
 import json
+import os
+import random
+import time
 
-from random import seed as set_seed
+import tqdm
 
 import dsl
-from dsl import *
-
+import generators
 import utils
 from utils import *
-
-import generators
+from dsl import *
 import verifiers
 
+# CONSTANTS ####################################################################
 
+PATH = 'data/temp/'
+SEED = 1337
+
+# UTILITIES ####################################################################
 
 def get_generators() -> dict:
     """
@@ -73,9 +76,9 @@ def demo_generator(key, n=6):
     
 
 def generate_dataset(
-    path: str = 're_arc',
-    seed: int = 42,
-    n_examples: int = 1000,
+    path: str='re_arc',
+    n_examples: int=32,
+    n_tasks: int=32,
     diff_lb: float = 0,
     diff_ub: float = 1
 ) -> None:
@@ -88,10 +91,6 @@ def generate_dataset(
     diff_lb: lower bound for difficulty
     diff_ub: upper bound for difficulty
     """
-    set_seed(seed)
-    os.makedirs(path)
-    tasks_path = os.path.join(path, 'tasks')
-    os.makedirs(tasks_path)
     generators_mapper = get_generators()
     verifiers_mapper = get_verifiers()
     keys = sorted(generators_mapper.keys())
@@ -202,3 +201,13 @@ def evaluate_verifiers_on_original_tasks() -> None:
     print(f'verification programs work for all examples for {n-k}/{n} tasks')
     print(f'verification fails (on one example) for tasks {failed_on}')
 
+# MAIN #########################################################################
+
+if __name__ == '__main__':
+    # create the dirs
+    os.makedirs(PATH, exist_ok=True)
+    os.makedirs(os.path.join(PATH, 'tasks'), exist_ok=True)
+    # setup the env
+    random.seed(SEED)
+    #
+    generate_dataset()
