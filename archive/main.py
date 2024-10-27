@@ -85,26 +85,29 @@ def check_sample(sample: dict, verifier_fn: callable) -> bool:
 
 # GENERATE #####################################################################
 
-def generate_task(generator_fn: callable, verifier_fn: callable, n_samples: int=5, diff_lb: float=0.0, diff_ub: float=1.0) -> tuple:
-    __valid = {}
-    __broken = {}
-    __count = round(random.uniform(2, max(2, n_samples)))
-    while len(__valid) < __count:
+def generate_list(generator_fn: callable, verifier_fn: callable, count: int=4, diff_lb: float=0.0, diff_ub: float=1.0) -> tuple:
+    __valid = []
+    while len(__valid) < count:
         try:
             __s = generator_fn(diff_lb, diff_ub)
-            __k = hash(__s['input'])
             if check_sample(sample=__s, verifier_fn=verifier_fn):
-                __valid[__k] = __s
-            else:
-                __broken[__k] = __s
+                __valid.append(__s)
         except:
             pass
-    return __valid, __broken
+    return __valid
+
+def generate_task(generator_fn: callable, verifier_fn: callable, n_train: int=4, n_test: int=1, diff_lb: float=0.0, diff_ub: float=1.0) -> tuple:
+    __n_train = round(random.uniform(1, max(1, n_train)))
+    __n_test = round(random.uniform(1, max(1, n_test)))
+    return {
+        'train': generate_list(generator_fn=generator_fn, verifier_fn=verifier_fn, count=__n_train, diff_lb=diff_lb, diff_ub=diff_ub),
+        'test': generate_list(generator_fn=generator_fn, verifier_fn=verifier_fn, count=__n_test, diff_lb=diff_lb, diff_ub=diff_ub),}
 
 def generate_dataset(
     path: str=PATH,
-    n_tasks: int=32,
-    n_samples: int=5,
+    n_tasks: int=128,
+    n_train: int=4,
+    n_test: int=1,
     diff_lb: float = 0.0,
     diff_ub: float = 1.0
 ) -> None:
@@ -113,7 +116,8 @@ def generate_dataset(
 
     path: which folder to save data to
     n_tasks: number of distinct task per challenge
-    n_samples: number of examples per task
+    n_train: number of training examples per task
+    n_test: number of testing examples per task
     diff_lb: lower bound for difficulty
     diff_ub: upper bound for difficulty
     """
@@ -129,14 +133,12 @@ def generate_dataset(
         __che = __verifiers[__k]
         for __j in range(n_tasks):
             # generate an independent task
-            __v, __b = generate_task(generator_fn=__gen, verifier_fn=__che, n_samples=n_samples, diff_lb=diff_lb, diff_ub=diff_ub)
+            __t = generate_task(generator_fn=__gen, verifier_fn=__che, n_train=n_train, n_test=n_test, diff_lb=diff_lb, diff_ub=diff_ub)
             # display progress
             __pbar.set_description(__status.format(c=__i, t=__j))
             # export the results
             with open(os.path.join(path, f'{__k}.{__j}.json'), 'w') as __f:
-                json.dump(list(__v.values()), __f)
-            with open(os.path.join(path, 'broken', f'{__k}.{__j}.json'), 'w') as __f:
-                json.dump(list(__b.values()), __f)
+                json.dump(__t, __f)
 
 # DISPLAY ######################################################################
 

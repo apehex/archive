@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "archive"
-version = "0.0.2"
+version = "0.0.3"
 description = "Extend the ARC"
 authors = ["apehex <apehex@protonmail.com>"]
 readme = ".github/README.md"
