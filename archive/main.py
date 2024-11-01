@@ -85,7 +85,7 @@ def check_sample(sample: dict, verifier_fn: callable) -> bool:
 
 # GENERATE #####################################################################
 
-def generate_list(generator_fn: callable, verifier_fn: callable, count: int=4, diff_lb: float=0.0, diff_ub: float=1.0) -> tuple:
+def generate_list(generator_fn: callable, verifier_fn: callable, count: int=3, diff_lb: float=0.0, diff_ub: float=1.0) -> tuple:
     __valid = []
     while len(__valid) < count:
         try:
@@ -96,8 +96,8 @@ def generate_list(generator_fn: callable, verifier_fn: callable, count: int=4, d
             pass
     return __valid
 
-def generate_task(generator_fn: callable, verifier_fn: callable, n_train: int=4, n_test: int=1, diff_lb: float=0.0, diff_ub: float=1.0) -> tuple:
-    __n_train = round(random.uniform(1, max(1, n_train)))
+def generate_task(generator_fn: callable, verifier_fn: callable, n_train: int=3, n_test: int=1, diff_lb: float=0.0, diff_ub: float=1.0) -> tuple:
+    __n_train = round(random.uniform(2, max(1, n_train)))
     __n_test = round(random.uniform(1, max(1, n_test)))
     return {
         'train': generate_list(generator_fn=generator_fn, verifier_fn=verifier_fn, count=__n_train, diff_lb=diff_lb, diff_ub=diff_ub),
@@ -105,8 +105,8 @@ def generate_task(generator_fn: callable, verifier_fn: callable, n_train: int=4,
 
 def generate_dataset(
     path: str=PATH,
-    n_tasks: int=128,
-    n_train: int=4,
+    n_tasks: int=256,
+    n_train: int=3,
     n_test: int=1,
     diff_lb: float = 0.0,
     diff_ub: float = 1.0
