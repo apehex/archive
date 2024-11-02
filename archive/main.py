@@ -129,6 +129,7 @@ def generate_dataset(
     __pbar = tqdm.tqdm(enumerate(__keys), desc=__status.format(c=0, t=0), position=0, leave=True, total=len(__keys))
     # iterate over challenges
     for __i, __k in __pbar:
+        os.makedirs(os.path.join(path, f'{__k}'), exist_ok=True)
         __gen = __generators[__k]
         __che = __verifiers[__k]
         for __j in range(n_tasks):
@@ -137,7 +138,7 @@ def generate_dataset(
             # display progress
             __pbar.set_description(__status.format(c=__i, t=__j))
             # export the results
-            with open(os.path.join(path, f'{__k}.{__j}.json'), 'w') as __f:
+            with open(os.path.join(path, f'{__k}', f'{__j}.json'), 'w') as __f:
                 json.dump(__t, __f)
 
 # DISPLAY ######################################################################
